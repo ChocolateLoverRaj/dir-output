@@ -1,0 +1,17 @@
+name: Build
+on:
+  push:
+    branches-ignore: [main, major, minor, patch]
+jobs:
+  doc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+      - run: npm ci
+      - run: npm run build
+      - uses: ChocolateLoverRaj/npm-version/commit@2.0.0
+        with:
+          files: 'README.md'
+          message: 'Generate README.md'
+          token: ${{ secrets.GITHUB_TOKEN }}
