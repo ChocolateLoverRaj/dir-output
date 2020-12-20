@@ -1,0 +1,21 @@
+name: Main
+on:
+  push:
+    branches: [main]
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+      - run: npm ci
+      - run: npm run build
+      - uses: ChocolateLoverRaj/npm-version/commit@2.0.0
+        with:
+          files: 'README.md'
+          message: 'Generate README.md'
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: ChocolateLoverRaj/npm-version/merge@2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          bases: 'major,minor,patch'
