@@ -1,0 +1,19 @@
+name: Check
+on:
+  pull_request:
+    branches: [main, major, minor, patch]
+jobs:
+  change:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+      - run: npm i
+      - uses: ChocolateLoverRaj/npm-version/check@2.0.0
+  freeze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ChocolateLoverRaj/npm-version/freeze@2.0.0
+        with:
+          options: 'freeze.json'

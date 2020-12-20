@@ -1,0 +1,21 @@
+{
+    "$schema": "https://raw.githubusercontent.com/ChocolateLoverRaj/npm-version/main/freeze/schema.json",
+    "files": [
+        {
+            "file": "package.json",
+            "freeze": {
+                "name": true,
+                "version": true,
+                "author": true,
+                "license": true
+            }
+        },
+        {
+            "file": "package-lock.json",
+            "freeze": {
+                "name": true,
+                "version": true
+            }
+        }
+    ]
+}
