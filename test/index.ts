@@ -122,6 +122,25 @@ describe('createDir', () => {
     strictEqual(existsSync('path/dir'), true)
   })
 
+  it('sets knowExist', async () => {
+    mkdirSync('path')
+    const dirOutput = new DirOutput('path')
+    await dirOutput.createDir('dir')
+    strictEqual(dirOutput.knowExist.get('dir'), true)
+  })
+
+  describe('reads knowExist', () => {
+    it('dir', async () => {
+      mkdirSync('path')
+      const dirOutput = new DirOutput('path')
+      dirOutput.knowExist.set('dir', true)
+      await dirOutput.createDir('dir')
+      strictEqual(existsSync('path/dir'), false)
+    })
+
+    it('file')
+  })
+
   describe('uses preCreate', () => {
     it('DELETED', async () => {
       mkdirSync('path')

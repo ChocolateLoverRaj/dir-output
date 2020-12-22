@@ -118,6 +118,16 @@ class DirOutput {
    * @param empty Whether or not to empty the dir if it was preserved instead of deleted.
    */
   async createDir (name: string, empty = true): Promise<void> {
+    // Check if it already exists as a dir
+    const knowExist = this.knowExist.get(name)
+    if (knowExist !== undefined) {
+      if (knowExist) {
+        return
+      } else {
+        // TODO: handle files
+      }
+    }
+
     const dirPath = join(this.outputPath, name)
 
     // Create
@@ -126,6 +136,8 @@ class DirOutput {
       this.preDelete.set(name, create.then(() => PreDelete.EXISTS))
       this.preCreate.set(name, create.then(() => PreCreate.CREATED))
       await create
+      this.knowNoExist.delete(name)
+      this.knowExist.set(name, true)
       this.preDelete.delete(name)
       this.preCreate.delete(name)
     }
