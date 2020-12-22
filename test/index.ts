@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-import DirOutput, { PreCreate } from '../lib/index'
+import DirOutput, { PreCreate, PreDelete } from '../lib/index'
 import mock from 'mock-fs'
 import { strictEqual } from 'assert'
 import { existsSync, mkdirSync, writeFileSync } from 'fs'
@@ -52,21 +52,43 @@ describe('remove', () => {
     strictEqual(existsSync('path/file'), true)
   })
 
-  it('uses preDelete', async () => {
-    mkdirSync('path')
-    writeFileSync('path/file', '')
-    const dirOutput = new DirOutput('path')
-    dirOutput.preDelete.set('file', Promise.resolve(false))
-    strictEqual(await dirOutput.remove('file'), false)
-    strictEqual(existsSync('path/file'), true)
+  describe('uses preDelete', () => {
+    it('DELETED', async () => {
+      mkdirSync('path')
+      writeFileSync('path/file', '')
+      const dirOutput = new DirOutput('path')
+      dirOutput.preDelete.set('file', Promise.resolve(PreDelete.DELETED))
+      strictEqual(await dirOutput.remove('file'), true)
+      strictEqual(existsSync('path/file'), true)
+    })
+
+    it('ENOENT', async () => {
+      mkdirSync('path')
+      writeFileSync('path/file', '')
+      const dirOutput = new DirOutput('path')
+      dirOutput.preDelete.set('file', Promise.resolve(PreDelete.ENOENT))
+      strictEqual(await dirOutput.remove('file'), false)
+      strictEqual(existsSync('path/file'), true)
+    })
   })
 
-  it('sets preDelete', async () => {
-    mkdirSync('path')
-    const dirOutput = new DirOutput('path')
-    const remove = dirOutput.remove('file')
-    strictEqual(await dirOutput.preDelete.get('file'), false)
-    await remove
+  describe('sets preDelete', () => {
+    it('DELETED', async () => {
+      mkdirSync('path')
+      writeFileSync('path/file', '')
+      const dirOutput = new DirOutput('path')
+      const remove = dirOutput.remove('file')
+      strictEqual(await dirOutput.preDelete.get('file'), PreDelete.DELETED)
+      await remove
+    })
+
+    it('ENOENT', async () => {
+      mkdirSync('path')
+      const dirOutput = new DirOutput('path')
+      const remove = dirOutput.remove('file')
+      strictEqual(await dirOutput.preDelete.get('file'), PreDelete.ENOENT)
+      await remove
+    })
   })
 
   it('deletes preDelete', async () => {
@@ -155,5 +177,43 @@ describe('createDir', () => {
     const dirOutput = new DirOutput('path')
     await dirOutput.createDir('dir')
     strictEqual(dirOutput.preCreate.has('dir'), false)
+  })
+
+  describe('sets preDelete', () => {
+    it('create', async () => {
+      mkdirSync('path')
+      const dirOutput = new DirOutput('path')
+      const update = dirOutput.createDir('dir')
+      strictEqual(await dirOutput.preDelete.get('dir'), PreDelete.EXISTS)
+      await update
+    })
+
+    it('empty', async () => {
+      mkdirSync('path')
+      const dirOutput = new DirOutput('path')
+      const preCreate = Promise.resolve(PreCreate.PRESERVED)
+      dirOutput.preCreate.set('dir', preCreate)
+      const update = dirOutput.createDir('dir')
+      await preCreate
+      strictEqual(await dirOutput.preDelete.get('dir'), PreDelete.EXISTS)
+      await update
+    })
+  })
+
+  describe('deletes preDelete', () => {
+    it('create', async () => {
+      mkdirSync('path')
+      const dirOutput = new DirOutput('path')
+      await dirOutput.createDir('dir')
+      strictEqual(dirOutput.preDelete.has('dir'), false)
+    })
+
+    it('empty', async () => {
+      mkdirSync('path')
+      const dirOutput = new DirOutput('path')
+      dirOutput.preCreate.set('dir', Promise.resolve(PreCreate.PRESERVED))
+      await dirOutput.createDir('dir')
+      strictEqual(dirOutput.preDelete.has('dir'), false)
+    })
   })
 })

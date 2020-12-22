@@ -6,6 +6,12 @@ import { promises as fs } from 'fs'
 import { emptyDir } from 'fs-extra'
 import { join } from 'path'
 
+export enum PreDelete {
+  EXISTS = 0,
+  ENOENT = 1,
+  DELETED = 2
+}
+
 export enum PreCreate {
   DELETED = 0,
   PRESERVED = 1,
@@ -20,7 +26,7 @@ class DirOutput {
   knowExist = new Map<string, boolean>()
   knowNoExist = new Set()
   additionalFiles = false
-  preDelete = new Map<string, Promise<boolean>>()
+  preDelete = new Map<string, Promise<PreDelete>>()
   preCreate = new Map<string, Promise<PreCreate>>()
 
   /**
@@ -83,15 +89,26 @@ class DirOutput {
         }
       }
     }
+    // Start removing
+    const startRemoving = async () => {
+      const preDelete = remove()
+      this.preDelete.set(file, preDelete.then(deleted => deleted ? PreDelete.DELETED : PreDelete.ENOENT))
+      this.preCreate.set(file, preDelete.then(() => PreCreate.DELETED))
+      return await preDelete
+    }
     // Wait for preDelete function, if it exists
     const preDelete = this.preDelete.get(file)
     if (preDelete) {
-      return await preDelete
+      const result = await preDelete
+      if (result === PreDelete.DELETED) {
+        return true
+      } else if (result === PreDelete.ENOENT) {
+        return false
+      } else {
+        return await startRemoving()
+      }
     } else {
-      const preDelete = remove()
-      this.preDelete.set(file, preDelete)
-      this.preCreate.set(file, preDelete.then(() => PreCreate.DELETED))
-      return await preDelete
+      return await startRemoving()
     }
   }
 
@@ -102,15 +119,30 @@ class DirOutput {
    */
   async createDir (name: string, empty = true): Promise<void> {
     const dirPath = join(this.outputPath, name)
-    // Check preCreate
-    const preCreate = this.preCreate.get(name)
-    if (!preCreate || await preCreate === PreCreate.DELETED) {
+
+    // Create
+    const create = async () => {
       const create = fs.mkdir(dirPath)
+      this.preDelete.set(name, create.then(() => PreDelete.EXISTS))
       this.preCreate.set(name, create.then(() => PreCreate.CREATED))
       await create
+      this.preDelete.delete(name)
       this.preCreate.delete(name)
-    } else if ((await preCreate) === PreCreate.PRESERVED && empty) {
-      await emptyDir(dirPath)
+    }
+    // Check preCreate
+    const preCreate = this.preCreate.get(name)
+    if (preCreate) {
+      const result = await preCreate
+      if (result === PreCreate.DELETED) {
+        await create()
+      } else if (result === PreCreate.PRESERVED && empty) {
+        const empty = emptyDir(dirPath)
+        this.preDelete.set(name, empty.then(() => PreDelete.EXISTS))
+        await empty
+        this.preDelete.delete(name)
+      }
+    } else {
+      await create()
     }
   }
 }
