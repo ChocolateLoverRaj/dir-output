@@ -43,6 +43,14 @@ describe('remove', () => {
     strictEqual(dirOutput.knowNoExist.has('hi'), true)
   })
 
+  it('sets knowExist', async () => {
+    mkdirSync('path')
+    const dirOutput = new DirOutput('path')
+    dirOutput.knowExist.set('hi', false)
+    await dirOutput.remove('hi')
+    strictEqual(dirOutput.knowExist.has('hi'), false)
+  })
+
   it('reads knowNoExist', async () => {
     mkdirSync('path')
     writeFileSync('path/file', '')
@@ -127,6 +135,14 @@ describe('createDir', () => {
     const dirOutput = new DirOutput('path')
     await dirOutput.createDir('dir')
     strictEqual(dirOutput.knowExist.get('dir'), true)
+  })
+
+  it('sets knowNoExist', async () => {
+    mkdirSync('path')
+    const dirOutput = new DirOutput('path')
+    dirOutput.knowNoExist.add('dir')
+    await dirOutput.createDir('dir')
+    strictEqual(dirOutput.knowNoExist.has('dir'), false)
   })
 
   describe('reads knowExist', () => {
