@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 import DirOutput, { PreCreate, PreDelete } from '../lib/index'
 import mock from 'mock-fs'
-import { strictEqual } from 'assert'
+import { rejects, strictEqual } from 'assert'
 import { existsSync, mkdirSync, writeFileSync } from 'fs'
 
 beforeEach(() => {
@@ -154,7 +154,12 @@ describe('createDir', () => {
       strictEqual(existsSync('path/dir'), false)
     })
 
-    it('file')
+    it('file', async () => {
+      mkdirSync('path')
+      const dirOutput = new DirOutput('path')
+      dirOutput.knowExist.set('dir', false)
+      await rejects(dirOutput.createDir('dir'), new Error('Could not create dir because it already exists and is a file.'))
+    })
   })
 
   describe('uses preCreate', () => {

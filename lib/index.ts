@@ -124,7 +124,7 @@ class DirOutput {
       if (knowExist) {
         return
       } else {
-        // TODO: handle files
+        throw new Error('Could not create dir because it already exists and is a file.')
       }
     }
 
