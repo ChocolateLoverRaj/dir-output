@@ -38,7 +38,7 @@ class DirOutput {
 
   /**
    * Remove a file or recursively remove a dir. Returns true if file was deleted, and false if file did not exist.
-   * @param file The name of the dir.
+   * @param file {string} The name of the dir.
    * @returns {Promise}
    * @fulfil boolean
    */
@@ -94,10 +94,12 @@ class DirOutput {
 
   /**
    * Creates a dir. If this dir was scheduled to be deleted by a `empty` operation, this dir is not deleted.
-   * @param name=true The name of the dir.
-   * @param empty Whether or not to empty the dir if it was preserved instead of deleted.
+   * @param name {string} The name of the dir.
+   * @param empty=true {boolean} Whether or not to empty the dir if it was preserved instead of deleted.
+   * @returns  {Promise}
+   * @fulfil void
    */
-  async createDir (name: string, empty = true): Promise<void> {
+  async createDir (name: string, empty: boolean = true): Promise<void> {
     // Check if it already exists as a dir
     const knowExist = this.knowExist.get(name)
     if (knowExist !== undefined) {
