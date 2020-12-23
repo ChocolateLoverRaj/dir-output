@@ -2,7 +2,7 @@
 import DirOutput, { PreCreate, PreDelete } from '../lib/index'
 import mock from 'mock-fs'
 import { rejects, strictEqual } from 'assert'
-import { existsSync, mkdirSync, readFile, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, writeFileSync } from 'fs'
 
 beforeEach(() => {
   mock()

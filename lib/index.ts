@@ -1,5 +1,5 @@
 /**
- * @module dir-output 
+ * @module dir-output
  * @description An interface for managing a dir.
  */
 import { promises as fs } from 'fs'
@@ -44,12 +44,12 @@ class DirOutput {
    */
   async remove (file: string): Promise<boolean> {
     // Check if it doesn't exist
-    if (this.knowNoExist.has(file) || !this.knowExist.has(file) && !this.additionalFiles) {
+    if (this.knowNoExist.has(file) || (!this.knowExist.has(file) && !this.additionalFiles)) {
       return false
     }
     // Function to remove it
-    const remove = async () => {
-      const done = () => {
+    const remove = async (): Promise<boolean> => {
+      const done = (): void => {
         this.knowExist.delete(file)
         this.knowNoExist.add(file)
         this.preDelete.delete(file)
@@ -70,7 +70,7 @@ class DirOutput {
       }
     }
     // Start removing
-    const startRemoving = async () => {
+    const startRemoving = async (): Promise<boolean> => {
       const preDelete = remove()
       this.preDelete.set(file, preDelete.then(deleted => deleted ? PreDelete.DELETED : PreDelete.ENOENT))
       this.preCreate.set(file, preDelete.then(() => PreCreate.DELETED))
@@ -78,7 +78,7 @@ class DirOutput {
     }
     // Wait for preDelete function, if it exists
     const preDelete = this.preDelete.get(file)
-    if (preDelete) {
+    if (preDelete !== undefined) {
       const result = await preDelete
       if (result === PreDelete.DELETED) {
         return true
@@ -113,7 +113,7 @@ class DirOutput {
     const dirPath = join(this.outputPath, name)
 
     // Create
-    const create = async () => {
+    const create = async (): Promise<void> => {
       const create = fs.mkdir(dirPath)
       this.preDelete.set(name, create.then(() => PreDelete.EXISTS))
       this.preCreate.set(name, create.then(() => PreCreate.CREATED))
@@ -125,7 +125,7 @@ class DirOutput {
     }
     // Check preCreate
     const preCreate = this.preCreate.get(name)
-    if (preCreate) {
+    if (preCreate !== undefined) {
       const result = await preCreate
       if (result === PreCreate.DELETED) {
         await create()
