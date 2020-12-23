@@ -23,7 +23,7 @@ export enum PreCreate {
  */
 class DirOutput {
   outputPath: string
-  knowExist = new Map<string, boolean>()
+  knowExist = new Map<string, false | DirOutput>()
   knowNoExist = new Set()
   additionalFiles = true
   preDelete = new Map<string, Promise<PreDelete>>()
@@ -110,7 +110,7 @@ class DirOutput {
       }
     }
 
-    const dirPath = join(this.outputPath, name)
+    const dirPath = `${this.outputPath}/${name}`
 
     // Create
     const create = async (): Promise<void> => {
@@ -119,7 +119,7 @@ class DirOutput {
       this.preCreate.set(name, create.then(() => PreCreate.CREATED))
       await create
       this.knowNoExist.delete(name)
-      this.knowExist.set(name, true)
+      this.knowExist.set(name, new DirOutput(dirPath))
       this.preDelete.delete(name)
       this.preCreate.delete(name)
     }
@@ -152,7 +152,9 @@ class DirOutput {
       this.knowNoExist.clear()
       this.additionalFiles = false
       files.forEach(file => {
-        this.knowExist.set(file.name, file.isDirectory())
+        this.knowExist.set(file.name, file.isDirectory()
+          ? new DirOutput(join(this.outputPath, file.name))
+          : false)
       })
     }
     await Promise.all([...this.knowExist.keys()].map(async file => await this.remove(file)))

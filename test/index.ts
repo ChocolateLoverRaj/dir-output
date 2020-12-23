@@ -155,7 +155,9 @@ describe('createDir', () => {
     mkdirSync('path')
     const dirOutput = new DirOutput('path')
     await dirOutput.createDir('dir')
-    strictEqual(dirOutput.knowExist.get('dir'), true)
+    const knowExist = dirOutput.knowExist.get('dir')
+    strictEqual(knowExist instanceof DirOutput, true)
+    knowExist instanceof DirOutput && strictEqual(knowExist.outputPath, 'path/dir')
   })
 
   it('sets knowNoExist', async () => {
@@ -170,7 +172,7 @@ describe('createDir', () => {
     it('dir', async () => {
       mkdirSync('path')
       const dirOutput = new DirOutput('path')
-      dirOutput.knowExist.set('dir', true)
+      dirOutput.knowExist.set('dir', new DirOutput('path/dir'))
       await dirOutput.createDir('dir')
       strictEqual(existsSync('path/dir'), false)
     })
