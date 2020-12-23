@@ -14,8 +14,7 @@ export enum PreDelete {
 
 export enum PreCreate {
   DELETED = 0,
-  PRESERVED = 1,
-  CREATED = 2
+  PRESERVED = 1
 }
 
 /**
@@ -27,7 +26,7 @@ class DirOutput {
   knowNoExist = new Set()
   additionalFiles = true
   preDelete = new Map<string, Promise<PreDelete>>()
-  preCreate = new Map<string, Promise<PreCreate>>()
+  preCreate = new Map<string, Promise<PreCreate | DirOutput>>()
 
   /**
    * @param outputPath The path to the dir.
@@ -99,12 +98,13 @@ class DirOutput {
    * @returns  {Promise}
    * @fulfil void
    */
-  async createDir (name: string, empty: boolean = true): Promise<void> {
+  async createDir (name: string, empty: boolean = true): Promise<DirOutput> {
     // Check if it already exists as a dir
+    const preCreate = this.preCreate.get(name)
     const knowExist = this.knowExist.get(name)
-    if (knowExist !== undefined) {
-      if (knowExist) {
-        return
+    if (knowExist !== undefined && preCreate === undefined) {
+      if (knowExist instanceof DirOutput) {
+        return knowExist
       } else {
         throw new Error('Could not create dir because it already exists and is a file.')
       }
@@ -113,30 +113,43 @@ class DirOutput {
     const dirPath = `${this.outputPath}/${name}`
 
     // Create
-    const create = async (): Promise<void> => {
+    const create = async (): Promise<DirOutput> => {
       const create = fs.mkdir(dirPath)
       this.preDelete.set(name, create.then(() => PreDelete.EXISTS))
-      this.preCreate.set(name, create.then(() => PreCreate.CREATED))
+      this.preCreate.set(name, create.then(() => new DirOutput(dirPath)))
       await create
       this.knowNoExist.delete(name)
-      this.knowExist.set(name, new DirOutput(dirPath))
+      const dirOutput = new DirOutput(dirPath)
+      this.knowExist.set(name, dirOutput)
       this.preDelete.delete(name)
       this.preCreate.delete(name)
+      return dirOutput
     }
     // Check preCreate
-    const preCreate = this.preCreate.get(name)
     if (preCreate !== undefined) {
       const result = await preCreate
-      if (result === PreCreate.DELETED) {
-        await create()
-      } else if (result === PreCreate.PRESERVED && empty) {
-        const empty = emptyDir(dirPath)
-        this.preDelete.set(name, empty.then(() => PreDelete.EXISTS))
-        await empty
-        this.preDelete.delete(name)
+      if (result instanceof DirOutput) {
+        return result
+      } else {
+        if (result === PreCreate.DELETED) {
+          return await create()
+        } else {
+          if (empty) {
+            const empty = emptyDir(dirPath)
+            this.preDelete.set(name, empty.then(() => PreDelete.EXISTS))
+            await empty
+            this.preDelete.delete(name)
+          }
+          const knowExist = this.knowExist.get(name)
+          if (knowExist instanceof DirOutput) {
+            return knowExist
+          } else {
+            throw new Error('knowExist should be an instance of DirOutput, but it isn\'t. This is an internal bug.')
+          }
+        }
       }
     } else {
-      await create()
+      return await create()
     }
   }
 
