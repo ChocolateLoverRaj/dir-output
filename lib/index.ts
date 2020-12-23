@@ -92,11 +92,11 @@ class DirOutput {
   }
 
   /**
-   * Creates a dir. If this dir was scheduled to be deleted by a `empty` operation, this dir is not deleted.
+   * Creates a dir. If this dir was scheduled to be deleted by a `empty` operation, this dir is not deleted. Returns a DirOutput with the outputPath being the path of the dir that was created.
    * @param name {string} The name of the dir.
    * @param empty=true {boolean} Whether or not to empty the dir if it was preserved instead of deleted.
-   * @returns  {Promise}
-   * @fulfil void
+   * @returns {Promise}
+   * @fulfil DirOutput
    */
   async createDir (name: string, empty: boolean = true): Promise<DirOutput> {
     // Check if it already exists as a dir
