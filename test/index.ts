@@ -147,7 +147,7 @@ describe('createDir', () => {
   it('create', async () => {
     mkdirSync('path')
     const dirOutput = new DirOutput('path')
-    await dirOutput.createDir('dir')
+    strictEqual((await dirOutput.createDir('dir')).outputPath, 'path/dir')
     strictEqual(existsSync('path/dir'), true)
   })
 
@@ -155,7 +155,9 @@ describe('createDir', () => {
     mkdirSync('path')
     const dirOutput = new DirOutput('path')
     await dirOutput.createDir('dir')
-    strictEqual(dirOutput.knowExist.get('dir'), true)
+    const knowExist = dirOutput.knowExist.get('dir')
+    strictEqual(knowExist instanceof DirOutput, true)
+    knowExist instanceof DirOutput && strictEqual(knowExist.outputPath, 'path/dir')
   })
 
   it('sets knowNoExist', async () => {
@@ -170,7 +172,7 @@ describe('createDir', () => {
     it('dir', async () => {
       mkdirSync('path')
       const dirOutput = new DirOutput('path')
-      dirOutput.knowExist.set('dir', true)
+      dirOutput.knowExist.set('dir', new DirOutput('path/dir'))
       await dirOutput.createDir('dir')
       strictEqual(existsSync('path/dir'), false)
     })
@@ -199,6 +201,7 @@ describe('createDir', () => {
         mkdirSync('path/dir/file')
         const dirOutput = new DirOutput('path')
         dirOutput.preCreate.set('dir', Promise.resolve(PreCreate.PRESERVED))
+        dirOutput.knowExist.set('dir', new DirOutput('path/dir'))
         await dirOutput.createDir('dir')
         strictEqual(existsSync('path/dir/file'), false)
       })
@@ -209,17 +212,18 @@ describe('createDir', () => {
         mkdirSync('path/dir/file')
         const dirOutput = new DirOutput('path')
         dirOutput.preCreate.set('dir', Promise.resolve(PreCreate.PRESERVED))
+        dirOutput.knowExist.set('dir', new DirOutput('path/dir'))
         await dirOutput.createDir('dir', false)
         strictEqual(existsSync('path/dir/file'), true)
       })
     })
 
-    it('CREATED', async () => {
+    it('DirOutput', async () => {
       mkdirSync('path')
       mkdirSync('path/dir')
       mkdirSync('path/dir/file')
       const dirOutput = new DirOutput('path')
-      dirOutput.preCreate.set('dir', Promise.resolve(PreCreate.CREATED))
+      dirOutput.preCreate.set('dir', Promise.resolve(new DirOutput('path/dir')))
       await dirOutput.createDir('dir')
       strictEqual(existsSync('path/dir/file'), true)
     })
@@ -229,7 +233,9 @@ describe('createDir', () => {
     mkdirSync('path')
     const dirOutput = new DirOutput('path')
     const create = dirOutput.createDir('dir')
-    strictEqual(await dirOutput.preCreate.get('dir'), PreCreate.CREATED)
+    const preCreate = await dirOutput.preCreate.get('dir')
+    strictEqual(preCreate instanceof DirOutput, true)
+    preCreate instanceof DirOutput && strictEqual(preCreate.outputPath, 'path/dir')
     await create
   })
 
@@ -253,6 +259,7 @@ describe('createDir', () => {
       mkdirSync('path')
       const dirOutput = new DirOutput('path')
       const preCreate = Promise.resolve(PreCreate.PRESERVED)
+      dirOutput.knowExist.set('dir', new DirOutput('path/dir'))
       dirOutput.preCreate.set('dir', preCreate)
       const update = dirOutput.createDir('dir')
       await preCreate
@@ -273,6 +280,7 @@ describe('createDir', () => {
       mkdirSync('path')
       const dirOutput = new DirOutput('path')
       dirOutput.preCreate.set('dir', Promise.resolve(PreCreate.PRESERVED))
+      dirOutput.knowExist.set('dir', new DirOutput('path/dir'))
       await dirOutput.createDir('dir')
       strictEqual(dirOutput.preDelete.has('dir'), false)
     })
