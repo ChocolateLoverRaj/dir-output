@@ -1,5 +1,5 @@
 {
-  "name": "file-output",
+  "name": "dir-output",
   "version": "1.0.0",
   "description": "An interface for managing a dir.",
   "main": "lib/index.js",
