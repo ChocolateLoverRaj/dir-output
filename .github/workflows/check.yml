@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
       - run: npm i
-      - uses: ChocolateLoverRaj/npm-version/check@check-404
+      - uses: ChocolateLoverRaj/npm-version/check@2.0.1
   freeze:
     runs-on: ubuntu-latest
     steps:
