@@ -47,10 +47,10 @@ Remove a file or recursively remove a dir. Returns true if file was deleted, and
 <a name="module_dir-output..DirOutput+createDir"></a>
 
 #### dirOutput.createDir(name, empty) ⇒ <code>Promise</code>
-Creates a dir. If this dir was scheduled to be deleted by a `empty` operation, this dir is not deleted.
+Creates a dir. If this dir was scheduled to be deleted by a `empty` operation, this dir is not deleted. Returns a DirOutput with the outputPath being the path of the dir that was created.
 
 **Kind**: instance method of [<code>DirOutput</code>](#module_dir-output..DirOutput)  
-**Fulfil**: void  
+**Fulfil**: DirOutput  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
