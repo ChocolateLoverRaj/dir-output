@@ -60,6 +60,15 @@ describe('remove', () => {
     strictEqual(existsSync('path/file'), true)
   })
 
+  it('reads additionalFiles', async () => {
+    mkdirSync('path')
+    writeFileSync('path/file', '')
+    const dirOutput = new DirOutput('path')
+    dirOutput.additionalFiles = false
+    strictEqual(await dirOutput.remove('file'), false)
+    strictEqual(existsSync('path/file'), true)
+  })
+
   describe('uses preDelete', () => {
     it('DELETED', async () => {
       mkdirSync('path')

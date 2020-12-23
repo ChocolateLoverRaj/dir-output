@@ -25,7 +25,7 @@ class DirOutput {
   outputPath: string
   knowExist = new Map<string, boolean>()
   knowNoExist = new Set()
-  additionalFiles = false
+  additionalFiles = true
   preDelete = new Map<string, Promise<PreDelete>>()
   preCreate = new Map<string, Promise<PreCreate>>()
 
@@ -64,7 +64,7 @@ class DirOutput {
    */
   async remove (file: string): Promise<boolean> {
     // Check if it doesn't exist
-    if (this.knowNoExist.has(file)) {
+    if (this.knowNoExist.has(file) || !this.additionalFiles) {
       return false
     }
     // Function to remove it
