@@ -2,7 +2,7 @@
 import DirOutput, { PreCreate, PreDelete } from '../lib/index'
 import mock from 'mock-fs'
 import { rejects, strictEqual } from 'assert'
-import { existsSync, mkdirSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, readFile, writeFileSync } from 'fs'
 
 beforeEach(() => {
   mock()
@@ -60,13 +60,25 @@ describe('remove', () => {
     strictEqual(existsSync('path/file'), true)
   })
 
-  it('reads additionalFiles', async () => {
-    mkdirSync('path')
-    writeFileSync('path/file', '')
-    const dirOutput = new DirOutput('path')
-    dirOutput.additionalFiles = false
-    strictEqual(await dirOutput.remove('file'), false)
-    strictEqual(existsSync('path/file'), true)
+  describe('reads additionalFiles', () => {
+    it('not in knowExist', async () => {
+      mkdirSync('path')
+      writeFileSync('path/file', '')
+      const dirOutput = new DirOutput('path')
+      dirOutput.additionalFiles = false
+      strictEqual(await dirOutput.remove('file'), false)
+      strictEqual(existsSync('path/file'), true)
+    })
+
+    it('in knowExist', async () => {
+      mkdirSync('path')
+      writeFileSync('path/file', '')
+      const dirOutput = new DirOutput('path')
+      dirOutput.knowExist.set('file', false)
+      dirOutput.additionalFiles = false
+      strictEqual(await dirOutput.remove('file'), true)
+      strictEqual(existsSync('path/file'), false)
+    })
   })
 
   describe('uses preDelete', () => {
@@ -264,5 +276,43 @@ describe('createDir', () => {
       await dirOutput.createDir('dir')
       strictEqual(dirOutput.preDelete.has('dir'), false)
     })
+  })
+})
+
+describe('empty', () => {
+  describe('reads dir', () => {
+    it('yes', async () => {
+      mkdirSync('path')
+      mkdirSync('path/dir')
+      writeFileSync('path/file', '')
+      const dirOutput = new DirOutput('path')
+      await dirOutput.empty()
+      strictEqual(existsSync('path/dir'), false)
+      strictEqual(existsSync('path/file'), false)
+    })
+
+    it('no', async () => {
+      mkdirSync('path')
+      mkdirSync('path/dir')
+      const dirOutput = new DirOutput('path')
+      dirOutput.additionalFiles = false
+      await dirOutput.empty()
+      strictEqual(existsSync('path/dir'), true)
+    })
+  })
+
+  it('clears knowNoExist', async () => {
+    mkdirSync('path')
+    const dirOutput = new DirOutput('path')
+    dirOutput.knowNoExist.add('file')
+    await dirOutput.empty()
+    strictEqual(dirOutput.knowNoExist.has('file'), false)
+  })
+
+  it('sets additionalFiles', async () => {
+    mkdirSync('path')
+    const dirOutput = new DirOutput('path')
+    await dirOutput.empty()
+    strictEqual(dirOutput.additionalFiles, false)
   })
 })

@@ -37,26 +37,6 @@ class DirOutput {
   }
 
   /**
-   * Remove all files and dirs in the output dir.
-   * @returns {Promise}
-   * @fulfil {void}
-   */
-  async empty (): Promise<void> {
-    const files = await fs.readdir(this.outputPath, { withFileTypes: true })
-    for (const file of files) {
-      this.knowExist.set(file.name, file.isDirectory())
-    }
-    await Promise.all(files.map(async file => {
-      const filePath = join(this.outputPath, file.name)
-      if (file.isDirectory()) {
-        await fs.rm(filePath, { recursive: true, force: true })
-      } else {
-        await fs.unlink(filePath)
-      }
-    }))
-  }
-
-  /**
    * Remove a file or recursively remove a dir. Returns true if file was deleted, and false if file did not exist.
    * @param file The name of the dir.
    * @returns {Promise}
@@ -64,7 +44,7 @@ class DirOutput {
    */
   async remove (file: string): Promise<boolean> {
     // Check if it doesn't exist
-    if (this.knowNoExist.has(file) || !this.additionalFiles) {
+    if (this.knowNoExist.has(file) || !this.knowExist.has(file) && !this.additionalFiles) {
       return false
     }
     // Function to remove it
@@ -156,6 +136,24 @@ class DirOutput {
     } else {
       await create()
     }
+  }
+
+  /**
+   * Remove all files and dirs in the output dir.
+   * @returns {Promise}
+   * @fulfil void
+   */
+  async empty (): Promise<void> {
+    if (this.additionalFiles) {
+      const files = await fs.readdir(this.outputPath, { withFileTypes: true })
+      this.knowExist.clear()
+      this.knowNoExist.clear()
+      this.additionalFiles = false
+      files.forEach(file => {
+        this.knowExist.set(file.name, file.isDirectory())
+      })
+    }
+    await Promise.all([...this.knowExist.keys()].map(async file => await this.remove(file)))
   }
 }
 
