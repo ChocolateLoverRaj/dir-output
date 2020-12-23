@@ -17,3 +17,25 @@ jobs:
       - uses: ChocolateLoverRaj/npm-version/freeze@2.0.0
         with:
           options: 'freeze.json'
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: [10, 12, 14, 15]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.version }}
+      - run: npm i
+      - run: npm test
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 14
+      - run: npm run lint
+
+        
